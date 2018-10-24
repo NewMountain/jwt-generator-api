@@ -2,19 +2,21 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const R = require("ramda");
 const uuidv4 = require("uuid/v4");
+var jwt = require("jsonwebtoken");
+const moment = require("moment");
 
 let app = express();
 const port = 3001;
-
-// Voodoo bullshit after wasting too much time on this:
-// https://github.com/github/fetch/issues/323
-//app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const jwtSecret = process.env["JWT_SECRET"] || "SUPER-DUPER-HYPER-MEGA-SECRET";
 
 defaultRoute = "/api/jwt-generator/v1";
 const mkRt = route => `${defaultRoute}${route}`;
+
+// ===========================================================================
+//                                 ROUTES
+// ===========================================================================
 
 app.get(mkRt("/generate-token"), (req, res) => {
   if (R.isNil(req.headers.user)) {
@@ -31,10 +33,20 @@ app.get(mkRt("/generate-token"), (req, res) => {
     coll.deleteMany({ user: req.headers.user }).then(() => {
       // Generate a new uuid
       const newId = uuidv4();
+      // Make a timestamp
+      const stamp = moment().format("YYYY-MM-DD hh:mm:ss a");
       // Set in Mongo
-      coll.insertOne({ user: req.headers.user, token: newId }).then(() => {
+      const record = {
+        user: req.headers.user,
+        token: newId,
+        timestamp: stamp
+      };
+      coll.insertOne(record).then(() => {
         // On commit, give the users what they need
-        res.json({ token: newId });
+        // Removing Mongo key
+        // No leaking implementation details!
+        const userJwt = jwt.sign(R.dissoc("_id", record), jwtSecret, { algorithm: "HS512" });
+        res.json({ token: userJwt });
       });
     });
   }
@@ -42,14 +54,14 @@ app.get(mkRt("/generate-token"), (req, res) => {
 
 app.post(mkRt("/verify-token"), (req, res) => {
   console.log(`Request on ${req.url}`);
-  console.log(req.body);
 
   const coll = app.db.collection("test_jwts");
 
-  coll.findOne({ user: req.body.user }).then(response => {
+  coll.findOne({ user: req.body.user }).then(mongoResponse => {
     let status;
-    console.log(response);
-    if (response.token === req.body.token) {
+    const decodedObject = jwt.verify(req.body.token, jwtSecret, { algorithm: "HS512" });
+
+    if (mongoResponse.token === decodedObject.token) {
       status = "valid";
     } else {
       status = "invalid";
