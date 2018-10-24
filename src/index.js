@@ -1,4 +1,15 @@
 const server = require("./app.js");
-const app = server.app;
+let app = server.app;
+const MongoClient = require("mongodb").MongoClient;
 
-app.listen(server.port, () => console.log(`Example app listening on port ${server.port}!`));
+MongoClient.connect(server.conn)
+  .then(client => {
+    db = client.db(server.dbName); // whatever your database name is
+    // Attach back express
+    app.db = db;
+    // Get the server listening
+    app.listen(server.port, () => console.log(`Example app listening on port ${server.port}!`));
+  })
+  .catch(err => {
+    console.log(err);
+  });
