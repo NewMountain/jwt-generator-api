@@ -1,0 +1,29 @@
+{
+  "name": "jwt-generator-api",
+  "version": "1.0.0",
+  "description": "A simple little API to generate a jwt, store it in mongo and let you confirm that jwt",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewMountain/jwt-generator-api.git"
+  },
+  "keywords": [
+    "jwt",
+    "service"
+  ],
+  "author": "NewMountain",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NewMountain/jwt-generator-api/issues"
+  },
+  "homepage": "https://github.com/NewMountain/jwt-generator-api#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "jsonwebtoken": "^8.3.0",
+    "ramda": "^0.25.0",
+    "uuid": "^3.3.2"
+  }
+}
